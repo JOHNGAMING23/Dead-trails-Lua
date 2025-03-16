@@ -1,0 +1,57 @@
+local player = game.Players.LocalPlayer
+local playerGui = player:FindFirstChildOfClass("PlayerGui")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+screenGui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame")
+frame.Size = UDim2.new(0, 200, 0, 100)
+frame.Position = UDim2.new(0.5, -100, 0.5, -50)
+frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+frame.Active = true
+frame.Draggable = true
+frame.Parent = screenGui
+
+local button = Instance.new("TextButton")
+button.Size = UDim2.new(0, 150, 0, 50)
+button.Position = UDim2.new(0.5, -75, 0.5, -25)
+button.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+button.Text = "DRAG"
+button.Parent = frame
+
+local replicatedStorage = game:GetService("ReplicatedStorage")
+local requestStartDrag = replicatedStorage:FindFirstChild("Shared") and replicatedStorage.Shared:FindFirstChild("Remotes") and replicatedStorage.Shared.Remotes:FindFirstChild("RequestStartDrag")
+
+local function getNearestPlayer()
+    local nearestCharacter
+    local minDistance = math.huge
+
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local playerPosition = player.Character.HumanoidRootPart.Position
+        
+        for _, otherPlayer in ipairs(game.Players:GetPlayers()) do
+            if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local otherPosition = otherPlayer.Character.HumanoidRootPart.Position
+                local distance = (otherPosition - playerPosition).Magnitude
+
+                if distance < minDistance then
+                    minDistance = distance
+                    nearestCharacter = otherPlayer.Character
+                end
+            end
+        end
+    end
+
+    return nearestCharacter
+end
+
+button.MouseButton1Click:Connect(function()
+    local targetCharacter = getNearestPlayer()
+    
+    if targetCharacter and requestStartDrag then
+        requestStartDrag:FireServer(targetCharacter)
+    else
+        warn("RequestStartDrag event not found in ReplicatedStorage or no nearby players!")
+    end
+end)
